@@ -12,9 +12,8 @@ import tempfile
 # Inicializar Firebase a partir de secrets (sem caminho físico)
 if 'firebase_initialized' not in st.session_state:
     firebase_json = st.secrets["FIREBASE_CREDENTIALS_JSON"]
-    firebase_dict = json.loads(firebase_json)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w') as tmpfile:
-        json.dump(firebase_dict, tmpfile)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmpfile:
+        tmpfile.write(firebase_json.encode())
         cred = credentials.Certificate(tmpfile.name)
         firebase_admin.initialize_app(cred)
     st.session_state['firebase_initialized'] = True
@@ -73,9 +72,10 @@ for lembrete in lembretes:
         st.caption(f"Responsável: {data['nome_dono']} - {data['telefone']}")
 
         if st.button(f"Excluir {data['nome_pet']} - {data['tipo_lembrete']} ({doc_id})"):
-            db.collection("lembretes").document(doc_id).delete()
-            st.success(f"Lembrete de {data['nome_pet']} excluído!")
-            st.experimental_rerun()
+            if st.confirm("Tem certeza que deseja excluir este lembrete?"):
+                db.collection("lembretes").document(doc_id).delete()
+                st.success(f"Lembrete de {data['nome_pet']} excluído!")
+                st.experimental_rerun()
 
         lista_lembretes.append({
             "Pet": data['nome_pet'],
@@ -100,7 +100,7 @@ if lista_lembretes:
             msg['Subject'] = f"Lembrete: {item['Lembrete']} para {item['Pet']}"
             msg['From'] = EMAIL
             msg['To'] = item['Email']
-            corpo = (
+            msg.set_content(
                 f"Olá {item['Responsável']},
 
 "
@@ -111,7 +111,6 @@ if lista_lembretes:
                 "Atenciosamente,
 Equipe LembrePet"
             )
-            msg.set_content(corpo)
 
             try:
                 with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
