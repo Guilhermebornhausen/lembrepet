@@ -9,11 +9,12 @@ from email.message import EmailMessage
 import json
 import tempfile
 
-# Inicializar Firebase a partir de secrets (sem caminho físico)
+# Inicializar Firebase a partir de secrets (com json.loads)
 if 'firebase_initialized' not in st.session_state:
-    firebase_json = st.secrets["FIREBASE_CREDENTIALS_JSON"]
+    firebase_json_raw = st.secrets["FIREBASE_CREDENTIALS_JSON"]
+    firebase_json = json.loads(firebase_json_raw)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmpfile:
-        tmpfile.write(firebase_json.encode())
+        tmpfile.write(json.dumps(firebase_json).encode())
         cred = credentials.Certificate(tmpfile.name)
         firebase_admin.initialize_app(cred)
     st.session_state['firebase_initialized'] = True
