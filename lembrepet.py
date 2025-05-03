@@ -101,12 +101,16 @@ if lista_lembretes:
             msg['Subject'] = f"Lembrete: {item['Lembrete']} para {item['Pet']}"
             msg['From'] = EMAIL
             msg['To'] = item['Email']
-            msg.set_content(f"Olá {item['Responsável']},
+            msg.set_content(
+                f"Olá {item['Responsável']},
 
-Este é um lembrete de que o(a) {item['Pet']} tem um compromisso de {item['Lembrete']} agendado para {item['Data']} às {item['Hora']}.
+"
+                f"Este é um lembrete de que o(a) {item['Pet']} tem um compromisso de {item['Lembrete']} "
+                f"agendado para {item['Data']} às {item['Hora']}.
 
 Atenciosamente,
-Equipe LembrePet")
+Equipe LembrePet"
+            )
 
             try:
                 with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
