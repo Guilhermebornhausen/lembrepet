@@ -1,4 +1,4 @@
-# MVP do LembrePet - Cadastro de Clientes, Pets e Lembretes
+
 import streamlit as st
 import datetime
 import firebase_admin
@@ -9,7 +9,7 @@ from email.message import EmailMessage
 import json
 import tempfile
 
-# Inicializar Firebase a partir de secrets (sem caminho físico)
+# Inicializar Firebase a partir de secrets
 if 'firebase_initialized' not in st.session_state:
     firebase_json = st.secrets["FIREBASE_CREDENTIALS_JSON"]
     with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmpfile:
