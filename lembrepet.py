@@ -12,8 +12,9 @@ import tempfile
 # Inicializar Firebase a partir de secrets (sem caminho físico)
 if 'firebase_initialized' not in st.session_state:
     firebase_json = st.secrets["FIREBASE_CREDENTIALS_JSON"]
+    firebase_data = json.loads(firebase_json)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmpfile:
-        tmpfile.write(firebase_json.encode())
+        tmpfile.write(json.dumps(firebase_data).encode())
         cred = credentials.Certificate(tmpfile.name)
         firebase_admin.initialize_app(cred)
     st.session_state['firebase_initialized'] = True
@@ -72,10 +73,9 @@ for lembrete in lembretes:
         st.caption(f"Responsável: {data['nome_dono']} - {data['telefone']}")
 
         if st.button(f"Excluir {data['nome_pet']} - {data['tipo_lembrete']} ({doc_id})"):
-            if st.confirm("Tem certeza que deseja excluir este lembrete?"):
-                db.collection("lembretes").document(doc_id).delete()
-                st.success(f"Lembrete de {data['nome_pet']} excluído!")
-                st.experimental_rerun()
+            db.collection("lembretes").document(doc_id).delete()
+            st.success(f"Lembrete de {data['nome_pet']} excluído!")
+            st.experimental_rerun()
 
         lista_lembretes.append({
             "Pet": data['nome_pet'],
@@ -100,17 +100,13 @@ if lista_lembretes:
             msg['Subject'] = f"Lembrete: {item['Lembrete']} para {item['Pet']}"
             msg['From'] = EMAIL
             msg['To'] = item['Email']
-            msg.set_content(
-                f"Olá {item['Responsável']},
+            corpo = f"""Olá {item['Responsável']},
 
-"
-                f"Este é um lembrete de que o(a) {item['Pet']} tem um compromisso de {item['Lembrete']} "
-                f"agendado para {item['Data']} às {item['Hora']}.
+Este é um lembrete de que o(a) {item['Pet']} tem um compromisso de {item['Lembrete']} agendado para {item['Data']} às {item['Hora']}.
 
-"
-                "Atenciosamente,
-Equipe LembrePet"
-            )
+Atenciosamente,
+Equipe LembrePet"""
+            msg.set_content(corpo)
 
             try:
                 with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
