@@ -1,4 +1,3 @@
-# MVP do LembrePet - Cadastro de Clientes, Pets e Lembretes
 import streamlit as st
 import datetime
 import firebase_admin
@@ -9,13 +8,13 @@ from email.message import EmailMessage
 import json
 import tempfile
 
-# Inicializar Firebase a partir de secrets
+# Carregar credenciais do Firebase diretamente da string JSON
+firebase_json = st.secrets["FIREBASE_CREDENTIALS_JSON"]
+firebase_data = json.loads(firebase_json)
+
 if 'firebase_initialized' not in st.session_state:
-    firebase_json = st.secrets["FIREBASE_CREDENTIALS_JSON"]
-    firebase_json = firebase_json.replace('\\n', '\n')  # Corrige quebra de linha da chave
-    firebase_data = json.loads(firebase_json)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode="w") as tmpfile:
-        json.dump(firebase_data, tmpfile)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmpfile:
+        tmpfile.write(json.dumps(firebase_data).encode())
         cred = credentials.Certificate(tmpfile.name)
         firebase_admin.initialize_app(cred)
     st.session_state['firebase_initialized'] = True
@@ -101,13 +100,16 @@ if lista_lembretes:
             msg['Subject'] = f"Lembrete: {item['Lembrete']} para {item['Pet']}"
             msg['From'] = EMAIL
             msg['To'] = item['Email']
-            corpo = f"""Olá {item['Responsável']},
+            msg.set_content(
+                f"Olá {item['Responsável']},
 
-Este é um lembrete de que o(a) {item['Pet']} tem um compromisso de {item['Lembrete']} agendado para {item['Data']} às {item['Hora']}.
+"
+                f"Este é um lembrete de que o(a) {item['Pet']} tem um compromisso de {item['Lembrete']} agendado para {item['Data']} às {item['Hora']}.
 
-Atenciosamente,
-Equipe LembrePet"""
-            msg.set_content(corpo)
+"
+                "Atenciosamente,
+Equipe LembrePet"
+            )
 
             try:
                 with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
